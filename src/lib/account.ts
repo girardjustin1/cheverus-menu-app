@@ -1,20 +1,12 @@
-import { useCallback, useState } from 'react';
-import { accountKey, readJSON, writeJSON } from './storage';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api, ApiError } from './api';
+import { validateAccount } from './validate';
+
+export { validateAccount };
 
 export interface Account {
   fullName: string;
   email: string;
-}
-
-const ACCOUNT_KEY = 'cheverus:account:v1';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export function validateAccount(input: Account): Partial<Record<keyof Account, string>> {
-  const errors: Partial<Record<keyof Account, string>> = {};
-  if (input.fullName.trim().split(/\s+/).filter(Boolean).length < 2) errors.fullName = 'Enter your first and last name';
-  if (!EMAIL_RE.test(input.email.trim())) errors.email = 'Enter a valid email';
-  return errors;
 }
 
 export const initials = (fullName: string) =>
@@ -26,56 +18,86 @@ export const initials = (fullName: string) =>
     .join('');
 
 /**
- * Prototype sign-in: remembers who you are on this device. There is no password and no
- * server — it only scopes saved plans and order history to this name and email.
+ * The signed-in parent. With `initial` (stories, prototype) it lives in memory; otherwise it comes
+ * from the server session — an HttpOnly cookie that lasts a year and renews on every visit.
  */
 export function useAccount(initial?: Account | null) {
-  const [account, setAccount] = useState<Account | null>(() =>
-    initial !== undefined ? initial : (readJSON<Account>(ACCOUNT_KEY) ?? null),
-  );
-  const persist = initial === undefined;
+  const memory = initial !== undefined;
+  const [account, setAccountState] = useState<Account | null>(memory ? initial : null);
+  // Latest account for event handlers (state updaters may run later).
+  const accountRef = useRef(account);
+  const setAccount = useCallback((next: Account | null) => {
+    accountRef.current = next;
+    setAccountState(next);
+  }, []);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(memory ? 'ready' : 'loading');
   /** Bumps on each sign-in, so the signed-in view remounts for a new session only. */
   const [session, setSession] = useState(0);
+  const [attempt, setAttempt] = useState(0);
 
+  useEffect(() => {
+    if (memory) return;
+    let alive = true;
+    api
+      .getSession()
+      .then((r) => {
+        if (!alive) return;
+        setAccount(r.account);
+        setStatus('ready');
+      })
+      .catch(() => alive && setStatus('error'));
+    return () => {
+      alive = false;
+    };
+  }, [memory, attempt, setAccount]);
+
+  const retry = useCallback(() => {
+    setStatus('loading');
+    setAttempt((n) => n + 1);
+  }, []);
+
+  /** Throws ApiError (with `fields`) when the server rejects the details. */
   const signIn = useCallback(
-    (next: Account) => {
+    async (next: Account) => {
       const clean = { fullName: next.fullName.trim(), email: next.email.trim() };
-      setAccount(clean);
+      const saved = memory ? clean : (await api.signIn(clean)).account;
+      setAccount(saved);
       setSession((n) => n + 1);
-      if (persist) writeJSON(ACCOUNT_KEY, clean);
     },
-    [persist],
+    [memory, setAccount],
   );
 
-  /**
-   * Edit name or email while signed in. A new email carries the saved plan and order history
-   * with it (they're stored per email).
-   */
-  const updateAccount = useCallback(
-    (patch: Partial<Account>) => {
-      setAccount((current) => {
-        if (!current) return current;
-        const next = { ...current, ...patch };
-        if (persist) {
-          if (patch.email !== undefined && patch.email.trim().toLowerCase() !== current.email.trim().toLowerCase()) {
-            for (const name of ['plan', 'orders']) {
-              const data = readJSON(accountKey(current.email, name));
-              if (data !== undefined) writeJSON(accountKey(next.email, name), data);
-              writeJSON(accountKey(current.email, name), undefined);
-            }
-          }
-          writeJSON(ACCOUNT_KEY, next);
-        }
-        return next;
-      });
-    },
-    [persist],
-  );
-
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
+    if (!memory) await api.signOut().catch(() => undefined);
     setAccount(null);
-    if (persist) writeJSON(ACCOUNT_KEY, undefined);
-  }, [persist]);
+  }, [memory, setAccount]);
 
-  return { account, session, signIn, signOut, updateAccount };
+  // Name edits arrive per keystroke: save the latest valid one after a pause.
+  const pending = useRef<number | undefined>(undefined);
+  const updateAccount = useCallback(
+    async (patch: Partial<Account>): Promise<ApiError | null> => {
+      const current = accountRef.current;
+      if (!current) return null;
+      const candidate: Account = { ...current, ...patch };
+      setAccount(candidate);
+      if (memory) return null;
+      if (Object.keys(validateAccount(candidate)).length) return null;
+      window.clearTimeout(pending.current);
+      if (patch.email === undefined) {
+        pending.current = window.setTimeout(() => void api.updateAccount({ fullName: candidate.fullName }).catch(() => undefined), 600);
+        return null;
+      }
+      try {
+        const r = await api.updateAccount(candidate);
+        setAccount(r.account);
+        return null;
+      } catch (e) {
+        setAccount(current); // the server said no (e.g. that email is taken): roll back
+        return e instanceof ApiError ? e : new ApiError(0, 'Could not save');
+      }
+    },
+    [memory, setAccount],
+  );
+
+  return { account, status, retry, session, signIn, signOut, updateAccount };
 }

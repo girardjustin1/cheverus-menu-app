@@ -1,11 +1,11 @@
 import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
-import { Box, Button } from '@mui/material';
+import { Alert, Box, Button, Snackbar } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount, type Account } from '../lib/account';
+import type { ApiError } from '../lib/api';
 import { toISODate } from '../lib/dates';
 import { isDraft, useOrderHistory, type OrderRecord } from '../lib/history';
 import type { PlanMode, PlanState } from '../lib/plan';
-import { accountKey } from '../lib/storage';
 import { usePlan } from '../lib/usePlan';
 import { useRouter } from '../lib/router';
 import { EnsureRouter } from '../lib/RouterProvider';
@@ -15,6 +15,7 @@ import { AppMenu, type AppView } from './AppMenu';
 import type { ProfileSection } from './FamilyInfoForm';
 import { Onboarding } from './Onboarding';
 import { ProfilePage } from './ProfilePage';
+import { Splash } from './Splash';
 import { LoginScreen } from './LoginScreen';
 import { LunchPlanner } from './LunchPlanner';
 import { OrderHistory } from './OrderHistory';
@@ -48,14 +49,19 @@ function SignedIn({
   onAccountChange,
   fixture,
   today: todayProp,
-}: { account: Account; onSignOut: () => void; onAccountChange: (patch: Partial<Account>) => void } & AppShellProps) {
-  const stored = fixture === undefined;
+}: {
+  account: Account;
+  onSignOut: () => void;
+  onAccountChange: (patch: Partial<Account>) => Promise<ApiError | null> | void;
+} & AppShellProps) {
+  // Real app: data lives in Netlify Database via /api. Stories and the prototype pass fixtures (memory).
+  const remote = fixture === undefined;
   const [today] = useState(() => todayProp ?? toISODate(new Date()));
-  const planApi = usePlan(stored ? accountKey(account.email, 'plan') : null, fixture?.plan);
-  const { history, logOrder, removeOrder } = useOrderHistory(
-    stored ? accountKey(account.email, 'orders') : null,
-    fixture?.history,
-  );
+  const planApi = usePlan(remote, fixture?.plan);
+  const orders = useOrderHistory(remote, fixture?.history);
+  const { history, logOrder, removeOrder } = orders;
+  const loaded = planApi.status === 'ready' && orders.status === 'ready';
+  const loadFailed = planApi.status === 'error' || orders.status === 'error';
   const { route, navigate: go } = useRouter();
   const view = viewFor(route.path);
   const profileTab: ProfileSection = route.path === '/profile/child' ? 'child' : 'parent';
@@ -72,7 +78,7 @@ function SignedIn({
   }, [route]);
 
   // Sign-up steps always show a real deep link (#/welcome/parent or #/welcome/child).
-  const needsOnboarding = !planApi.plan.onboarded;
+  const needsOnboarding = loaded && !planApi.plan.onboarded;
   useEffect(() => {
     if (needsOnboarding && !route.path.startsWith('/welcome')) go({ path: '/welcome/parent', replace: true });
   }, [needsOnboarding, route.path, go]);
@@ -88,6 +94,19 @@ function SignedIn({
   }, [menuOpen]);
 
   // New parents fill in Parent info and Child info before planning (`#/welcome/parent|child`).
+  if (loadFailed) {
+    return (
+      <Splash
+        error="Couldn't load your plans. Check your connection and try again."
+        onRetry={() => {
+          if (planApi.status === 'error') planApi.retry();
+          if (orders.status === 'error') orders.retry();
+        }}
+      />
+    );
+  }
+  if (!loaded) return <Splash />;
+
   if (needsOnboarding) {
     return (
       <Onboarding
@@ -228,6 +247,12 @@ function SignedIn({
         )}
       </Box>
 
+      <Snackbar open={planApi.saveError || orders.saveError} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert severity="warning" variant="filled" sx={{ width: '100%' }}>
+          Couldn't save your latest change. It will retry on your next edit — check your connection.
+        </Alert>
+      </Snackbar>
+
       {/* Scrim over the pushed page; tap to close. */}
       <Box
         aria-hidden
@@ -274,7 +299,11 @@ export function AppShell(props: AppShellProps) {
 }
 
 function AppShellInner({ fixture, today }: AppShellProps) {
-  const { account, session, signIn, signOut, updateAccount } = useAccount(fixture ? (fixture.account ?? null) : undefined);
+  const { account, status, retry, session, signIn, signOut, updateAccount } = useAccount(
+    fixture ? (fixture.account ?? null) : undefined,
+  );
+  if (status === 'loading') return <Splash />;
+  if (status === 'error') return <Splash error="Couldn't reach the server. Check your connection and try again." onRetry={retry} />;
   if (!account) return <LoginScreen onSignIn={signIn} />;
   // Remount per sign-in session (not per email edit), so each sign-in loads that person's plan.
   return (

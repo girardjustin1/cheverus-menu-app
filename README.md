@@ -9,12 +9,24 @@ It ends in a ready-to-send email you can copy or open in Mail.
   against each new PDF.
 - **Extended Day:** Mon–Fri, dismissal until 5:30 PM —
   <https://cheverusschool.com/extended-day-program>
-- **Privacy:** sign-in is a local prototype (name + email, no password). Plans and past
-  orders are saved per email in this browser only (`localStorage`). Nothing is sent anywhere.
+- **Accounts & data:** parents sign in with full name + email (no password) and stay signed in
+  for a year on that device. Plans and past orders are saved to Netlify Database (Postgres).
+  Anyone who knows an account's email can open it — add a password or email code before
+  sharing widely.
 
 ## Stack
 
-React 19 · TypeScript · Vite 8 · MUI 9 · Storybook 10 · Vitest
+React 19 · TypeScript · Vite 8 · MUI 9 · Storybook 10 · Vitest · Netlify Functions · Netlify Database
+
+## Backend (Netlify)
+
+- `netlify/functions/` — `/api/session` (sign in/out, account), `/api/plan`, `/api/orders`.
+- `netlify/database/migrations/` — SQL applied automatically before each deploy goes live.
+- Sessions: random token in an `HttpOnly; Secure; SameSite=Lax` cookie (only its SHA-256 hash is
+  stored), valid 365 days and renewed on every visit.
+- Deploys: `main` → production; pull requests get deploy previews with their own database branch.
+- Local: `npm run dev` runs the app with functions + a local database; run `npm run db:migrate`
+  once (and after adding migrations).
 
 Colors come from the school logo: navy `#19044F` and yellow `#F4F00E`
 ([`src/theme/theme.ts`](src/theme/theme.ts)). Storybook opens in an iPhone 17
@@ -25,7 +37,8 @@ viewport (402 × 874).
 ```bash
 npm install
 npm run storybook      # component workshop, iPhone 17 viewport by default
-npm run dev            # the app
+npm run dev            # the app + API + local database (Netlify emulation)
+npm run db:migrate     # apply database migrations to the local database
 npm run prototype      # click-through prototype on :5190 (tap any field to fill it)
 npm test               # unit tests: menu data, week logic, email builder
 npm run test:stories   # renders every story + interaction tests (headless Chromium)

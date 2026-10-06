@@ -13,7 +13,8 @@ export interface FamilyInfoFormProps {
   signOffPlaceholder?: string;
   /** When given, a Parent section lets the signed-in parent edit their name and email. */
   account?: Account;
-  onAccountChange?: (patch: Partial<Account>) => void;
+  /** May return an error (e.g. the email already has an account) to show on the field. */
+  onAccountChange?: (patch: Partial<Account>) => Promise<{ fields?: Partial<Record<keyof Account, string>>; message: string } | null> | void;
 }
 
 function SectionLabel({ children }: { children: string }) {
@@ -25,8 +26,9 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 /** Parent name updates live; email is committed on blur so saved data moves once, not per keystroke. */
-function ParentAccountFields({ account, onChange }: { account: Account; onChange: (patch: Partial<Account>) => void }) {
+function ParentAccountFields({ account, onChange }: { account: Account; onChange: NonNullable<FamilyInfoFormProps['onAccountChange']> }) {
   const [email, setEmail] = useState(account.email);
+  const [emailError, setEmailError] = useState<string>();
   const errors = validateAccount({ fullName: account.fullName, email });
   return (
     <>
@@ -45,11 +47,14 @@ function ParentAccountFields({ account, onChange }: { account: Account; onChange
         slotProps={{ htmlInput: { inputMode: 'email', autoCapitalize: 'none' } }}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        onBlur={() => {
-          if (!errors.email && email.trim() !== account.email) onChange({ email: email.trim() });
+        onBlur={async () => {
+          if (errors.email || email.trim() === account.email) return;
+          const problem = await onChange({ email: email.trim() });
+          setEmailError(problem ? (problem.fields?.email ?? problem.message) : undefined);
+          if (problem) setEmail(account.email);
         }}
-        error={Boolean(errors.email)}
-        helperText={errors.email ?? 'Your plans and past orders are saved under this email.'}
+        error={Boolean(errors.email || emailError)}
+        helperText={errors.email ?? emailError ?? 'You sign in with this email. Your plans and past orders stay with your account.'}
       />
     </>
   );

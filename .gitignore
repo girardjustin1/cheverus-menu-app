@@ -35,3 +35,6 @@ playwright-report
 references/
 user-experience/
 menu/*.png
+
+# Netlify local state
+.netlify

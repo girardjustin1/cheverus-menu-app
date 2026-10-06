@@ -1,12 +1,13 @@
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { useState, type FormEvent } from 'react';
 import { validateAccount, type Account } from '../lib/account';
 import { useAutofill } from '../prototype/autofill';
 import { CHEVERUS, IPHONE_17 } from '../theme/theme';
 
 export interface LoginScreenProps {
-  onSignIn: (account: Account) => void;
+  /** May be async; a rejected ApiError's `fields` / message are shown on the form. */
+  onSignIn: (account: Account) => void | Promise<void>;
   /** Prefill, e.g. the last account used on this device. */
   initial?: Partial<Account>;
 }
@@ -14,14 +15,26 @@ export interface LoginScreenProps {
 export function LoginScreen({ onSignIn, initial }: LoginScreenProps) {
   const [values, setValues] = useState<Account>({ fullName: initial?.fullName ?? '', email: initial?.email ?? '' });
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [serverError, setServerError] = useState<{ message?: string; fields?: Partial<Record<keyof Account, string>> }>({});
   const autofill = useAutofill();
   const errors = validateAccount(values);
-  const show = (field: keyof Account) => (submitted ? errors[field] : undefined);
+  const show = (field: keyof Account) => (submitted ? (errors[field] ?? serverError.fields?.[field]) : undefined);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (Object.keys(errors).length === 0) onSignIn(values);
+    setServerError({});
+    if (Object.keys(errors).length > 0) return;
+    setBusy(true);
+    try {
+      await onSignIn(values);
+    } catch (err) {
+      const e2 = err as { message?: string; fields?: Partial<Record<keyof Account, string>> };
+      setServerError({ message: e2.fields ? undefined : (e2.message ?? 'Could not sign in'), fields: e2.fields });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -69,7 +82,7 @@ export function LoginScreen({ onSignIn, initial }: LoginScreenProps) {
           Sign in
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Your name signs the emails. Your plans and order history are saved under this email.
+          Your name signs the emails. Your plans and past orders are saved to your account under this email.
         </Typography>
 
         <Stack spacing={2}>
@@ -95,15 +108,20 @@ export function LoginScreen({ onSignIn, initial }: LoginScreenProps) {
             helperText={show('email')}
             fullWidth
           />
-          <Button type="submit" variant="contained" size="large" fullWidth>
-            Continue
+          {serverError.message && (
+            <Alert severity="error" role="alert">
+              {serverError.message}
+            </Alert>
+          )}
+          <Button type="submit" variant="contained" size="large" fullWidth disabled={busy}>
+            {busy ? 'Signing in…' : 'Continue'}
           </Button>
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ mt: 3, alignItems: 'flex-start', color: 'text.secondary' }}>
           <LockOutlinedIcon sx={{ fontSize: 18, mt: '2px' }} />
           <Typography variant="caption">
-            Prototype sign-in: no password, and nothing is sent anywhere. Your details stay on this device.
+            No password needed. You'll stay signed in on this device for a year.
           </Typography>
         </Stack>
       </Box>
