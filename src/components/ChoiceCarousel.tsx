@@ -12,7 +12,11 @@ export interface CarouselOption<T extends string> {
   subtitle?: string;
   emoji?: string;
   badges?: string[];
+  /** Diet match shown under the card: ok = green, warn = amber, no = dimmed card. */
+  fit?: { tone: 'ok' | 'warn' | 'no'; label: string };
 }
+
+const FIT_COLOR = { ok: 'success.main', warn: '#9A6B00', no: 'text.secondary' } as const;
 
 export interface ChoiceCarouselProps<T extends string> {
   title: string;
@@ -74,11 +78,12 @@ export function ChoiceCarousel<T extends string>({
                 justifyContent: 'flex-start',
                 textAlign: 'left',
                 p: 1.5,
-                borderRadius: 3,
+                borderRadius: '8px',
                 border: '2px solid',
                 borderColor: selected ? 'primary.main' : alpha(CHEVERUS.navy, 0.12),
                 bgcolor: selected ? CHEVERUS.yellowSoft : 'background.paper',
-                transition: 'border-color 120ms, background-color 120ms',
+                opacity: option.fit?.tone === 'no' && !selected ? 0.55 : 1,
+                transition: 'border-color 120ms, background-color 120ms, opacity 120ms',
               }}
             >
               {selected && (
@@ -111,6 +116,15 @@ export function ChoiceCarousel<T extends string>({
                     <Chip key={badge} label={badge} size="small" color="secondary" sx={{ height: 20, fontSize: 11 }} />
                   ))}
                 </Stack>
+              )}
+              {option.fit && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: FIT_COLOR[option.fit.tone], fontWeight: 700, lineHeight: 1.25, mt: option.badges?.length ? 0.75 : 'auto', pt: option.badges?.length ? 0 : 1 }}
+                >
+                  {option.fit.tone === 'ok' ? '✓ ' : option.fit.tone === 'warn' ? '⚠ ' : '✕ '}
+                  {option.fit.label}
+                </Typography>
               )}
             </ButtonBase>
           );

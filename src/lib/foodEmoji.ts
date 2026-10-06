@@ -1,6 +1,11 @@
 // First matching keyword wins, so list specific words before general ones.
 const RULES: [RegExp, string][] = [
   [/no school/i, '🏖️'],
+  [/muffin/i, '🧁'],
+  [/cereal bar/i, '🍫'],
+  [/cereal/i, '🥣'],
+  [/hot breakfast/i, '🍳'],
+  [/breakfast bread/i, '🍞'],
   [/pizza|crunchers/i, '🍕'],
   [/burger/i, '🍔'],
   [/hot dog|frank/i, '🌭'],

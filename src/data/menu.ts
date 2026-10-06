@@ -37,21 +37,17 @@ export const OFFERED_DAILY: DailyOption[] = [
   { id: 'cheese-sandwich', name: 'American Cheese Sandwich on Wheat Bread', tags: ['V'] },
 ];
 
-/** "Fruit & Veggie Bars May Include" — availability varies by day. */
-export const FRUIT_VEGGIE_BAR = [
-  'Carrots',
-  'Cucumbers',
-  'Tomatoes',
-  'Celery Sticks',
-  'Three Bean Salad',
-  'Fresh Fruit',
-  'Fruit Cups',
-  'Raisins',
-  '100% Fruit Juice',
-];
+/** "Fruit & Veggie Bars May Include" — availability varies by day. One of each per lunch. */
+export const VEGGIE_BAR = ['Carrots', 'Cucumbers', 'Tomatoes', 'Celery Sticks', 'Three Bean Salad'];
+export const FRUIT_BAR = ['Fresh Fruit', 'Fruit Cups', 'Raisins', '100% Fruit Juice'];
+export const FRUIT_VEGGIE_BAR = [...VEGGIE_BAR, ...FRUIT_BAR];
 
 /** Every meal comes with a choice of milk; the breakfast note lists fat-free or 1%. */
 export const MILK_CHOICES = ['1% Milk', 'Fat-Free Milk'];
+
+/** Grab & Go breakfast parts, from the breakfast box on the menu. One of each. */
+export const BREAKFAST_GRAINS = ['Muffin', 'Cereal', 'Cereal Bar', 'Breakfast Bread', 'Hot Breakfast Item', 'Whole Grain Snack'];
+export const BREAKFAST_FRUIT = ['½ Cup of Fruit', '100% Fruit Juice'];
 
 export const BREAKFAST_NOTE =
   'Free Grab & Go breakfast every day: whole-grain items (muffins, cereal, cereal bars, breakfast breads, hot breakfast items, whole-grain snacks), ½ cup of fruit or 100% fruit juice, and fat-free or 1% milk.';

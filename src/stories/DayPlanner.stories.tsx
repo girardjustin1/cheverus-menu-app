@@ -41,4 +41,9 @@ export const PreKSubstitution: Story = {
   args: { day: dayOn('2026-10-15'), plan: emptyDayPlan() },
 };
 
+export const VeganLabels: Story = {
+  name: 'Lunch cards with diet labels (vegan)',
+  args: { day: dayOn('2026-10-07'), plan: emptyDayPlan(), diet: { profile: 'vegan', nutAllergy: false } },
+};
+
 export const NoSchool: Story = { args: { day: dayOn('2026-10-12'), plan: emptyDayPlan() } };

@@ -3,7 +3,7 @@ import { MENU_DAYS } from '../data/menu';
 import { FULL_WEEK, PARTLY_PLANNED, WEEK_OF_OCT_12, WEEK_OF_OCT_5 } from '../stories/fixtures';
 import { mondayOf } from './dates';
 import { buildEmail, mailtoHref } from './email';
-import { dayStatus, defaultWeek, groupWeeks, isWeekday } from './plan';
+import { dayStatus, defaultWeek, groupWeeks, isWeekday, toggleBarPick } from './plan';
 
 describe('menu data', () => {
   it('only lists weekdays, each once', () => {
@@ -60,6 +60,7 @@ describe('buildEmail', () => {
   it('writes one section per planned day with every choice', () => {
     const { subject, body } = buildEmail(WEEK_OF_OCT_5, PARTLY_PLANNED);
     expect(subject).toBe('Sam — lunch & Extended Day plan, week of Oct 5');
+    expect(body.startsWith('Hi Ms. Smith and the Cheverus team,')).toBe(true);
     expect(body).toContain("Here is Sam (Grade 1)'s lunch and Extended Day plan for the week of Monday, Oct 5:");
     expect(body).toContain('Tuesday, October 6\n• Breakfast: Grab & Go breakfast, please');
     expect(body).toContain('• Lunch: Asian Chicken ("General Tso" hot lunch)');
@@ -79,6 +80,11 @@ describe('buildEmail', () => {
     expect(body).not.toMatch(/Thursday, October 8\n• Lunch: Packed lunch from home\n• Sides/);
   });
 
+  it('greets the whole team when no teacher is given', () => {
+    const { body } = buildEmail(WEEK_OF_OCT_5, { ...PARTLY_PLANNED, details: { ...PARTLY_PLANNED.details, teacherName: ' ' } });
+    expect(body.startsWith('Hi Cheverus team,')).toBe(true);
+  });
+
   it('notes the holiday and handles an empty plan', () => {
     const { body } = buildEmail(WEEK_OF_OCT_12, { ...FULL_WEEK, days: {} });
     expect(body).toContain('Monday, October 12\n• No school');
@@ -88,5 +94,19 @@ describe('buildEmail', () => {
     const href = mailtoHref(buildEmail(WEEK_OF_OCT_5, FULL_WEEK));
     expect(href.startsWith('mailto:name%40example.com?subject=Sam%20')).toBe(true);
     expect(href).not.toContain('+');
+  });
+});
+
+describe('toggleBarPick — one veggie and one fruit', () => {
+  it('keeps one of each, swaps within a group, and clears on re-tap', () => {
+    let extras: string[] = [];
+    extras = toggleBarPick(extras, 'Carrots');
+    extras = toggleBarPick(extras, 'Raisins');
+    expect(extras).toEqual(['Carrots', 'Raisins']);
+    extras = toggleBarPick(extras, 'Cucumbers');
+    expect(extras).toEqual(['Raisins', 'Cucumbers']);
+    extras = toggleBarPick(extras, 'Fruit Cups');
+    expect(extras).toEqual(['Cucumbers', 'Fruit Cups']);
+    expect(toggleBarPick(extras, 'Fruit Cups')).toEqual(['Cucumbers']);
   });
 });

@@ -1,24 +1,36 @@
 import { Box, Button, Card, CardContent, Chip, Divider, Stack, TextField, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
+  BREAKFAST_FRUIT,
+  BREAKFAST_GRAINS,
   BREAKFAST_NOTE,
   DIET_TAG_LABELS,
-  FRUIT_VEGGIE_BAR,
+  FRUIT_BAR,
   MILK_CHOICES,
+  VEGGIE_BAR,
   OFFERED_DAILY,
   type MenuDay,
 } from '../data/menu';
-import { fmtLongDate } from '../lib/dates';
+import { fmtLongDate, fmtWeekday, parseISODate } from '../lib/dates';
+import { defaultDietPrefs, lunchFit, type DietPrefs } from '../lib/diet';
 import { foodEmoji } from '../lib/foodEmoji';
+import { useAutofill } from '../prototype/autofill';
 import {
   EDP_PICKUP_TIMES,
   sidesFor,
+  toggleBarPick,
+  type BreakfastPicks,
   type DayPlan,
   type DrinkChoice,
   type EdpChoice,
   type LunchChoice,
 } from '../lib/plan';
+import { CHEVERUS } from '../theme/theme';
 import { ChipSelect } from './ChipSelect';
+import { SectionHeader } from './SectionHeader';
 import { ChoiceCarousel, type CarouselOption } from './ChoiceCarousel';
+
+const fmtMonthDayLong = (iso: string) => parseISODate(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
 /** Fields that can be copied to every school day in the week. */
 export type WeekWideField = 'drink' | 'edp' | 'breakfast';
@@ -28,10 +40,17 @@ export interface DayPlannerProps {
   plan: DayPlan;
   onChange: (patch: Partial<DayPlan>) => void;
   onApplyToWeek?: (field: WeekWideField) => void;
+  /** Marks each lunch card with how it matches the diet. */
+  diet?: DietPrefs;
 }
 
-function lunchOptions(day: MenuDay): CarouselOption<LunchChoice>[] {
-  return [
+function lunchOptions(day: MenuDay, diet: DietPrefs): CarouselOption<LunchChoice>[] {
+  const withFit = (option: CarouselOption<LunchChoice>): CarouselOption<LunchChoice> => {
+    if (diet.profile === 'none') return option;
+    const { fit, reason } = lunchFit(day, option.value, diet);
+    return { ...option, fit: { tone: fit === 'fits' ? 'ok' : fit === 'ask' ? 'warn' : 'no', label: reason } };
+  };
+  const options: CarouselOption<LunchChoice>[] = [
     {
       value: 'hot',
       emoji: foodEmoji(day.entree),
@@ -55,6 +74,7 @@ function lunchOptions(day: MenuDay): CarouselOption<LunchChoice>[] {
       subtitle: 'Skip school lunch today',
     },
   ];
+  return options.map(withFit);
 }
 
 const DRINK_OPTIONS: CarouselOption<DrinkChoice>[] = [
@@ -87,7 +107,8 @@ function SameAllWeek({ onClick }: { onClick?: () => void }) {
   );
 }
 
-export function DayPlanner({ day, plan, onChange, onApplyToWeek }: DayPlannerProps) {
+export function DayPlanner({ day, plan, onChange, onApplyToWeek, diet = defaultDietPrefs() }: DayPlannerProps) {
+  const autofill = useAutofill();
   if (day.noSchool) {
     return (
       <Card sx={{ m: 2 }}>
@@ -111,48 +132,81 @@ export function DayPlanner({ day, plan, onChange, onApplyToWeek }: DayPlannerPro
 
   return (
     <Stack spacing={3} sx={{ p: 2 }} divider={<Divider flexItem />}>
-      <Box>
-        <Typography variant="overline" color="text.secondary">
-          {fmtLongDate(day.date)}
+      <Box
+        component="section"
+        aria-labelledby="featured-meal-title"
+        sx={{ p: 2, borderRadius: '8px', bgcolor: CHEVERUS.yellowSoft, border: `1px solid ${alpha(CHEVERUS.navy, 0.12)}` }}
+      >
+        <Typography id="featured-meal-title" variant="h3" component="h2">
+          ⭐ Featured meal of the day
         </Typography>
-        <Typography variant="h2" component="h2" sx={{ mb: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          {fmtLongDate(day.date)}
+          {day.theme ? ` · “${day.theme}”` : ''}
+        </Typography>
+        <Typography variant="h2" component="p" sx={{ mb: 1 }}>
           {foodEmoji(day.entree)} {day.entree}
         </Typography>
+        {(day.tags?.length || day.entreeNote) && (
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+            {day.tags?.map((t) => (
+              <Chip key={t} size="small" color="secondary" label={DIET_TAG_LABELS[t]} />
+            ))}
+            {day.entreeNote && (
+              <Typography variant="caption" color="text.secondary">
+                {day.entreeNote}
+              </Typography>
+            )}
+          </Stack>
+        )}
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
           {day.sides.map((side) => (
-            <Chip key={side} size="small" label={side} variant="outlined" />
+            <Chip key={side} size="small" label={side} variant="outlined" sx={{ bgcolor: 'background.paper' }} />
           ))}
-          <Chip size="small" label="Choice of milk" variant="outlined" />
+          <Chip size="small" label="Choice of milk" variant="outlined" sx={{ bgcolor: 'background.paper' }} />
         </Stack>
       </Box>
 
-      <ChoiceCarousel
-        title="Choose lunch"
-        hint="Select 1"
-        required
-        options={lunchOptions(day)}
-        value={plan.lunch}
-        onChange={(lunch) => onChange({ lunch })}
-      />
+      {/* The chosen lunch and its set sides are one section — no divider between them. */}
+      <Stack spacing={2.5}>
+        <ChoiceCarousel
+          title="Choose lunch"
+          hint="Select 1"
+          required
+          options={lunchOptions(day, diet)}
+          value={plan.lunch}
+          onChange={(lunch) => onChange({ lunch })}
+        />
+        {plan.lunch && plan.lunch !== 'home' && (
+          <ChipSelect
+            title="Sides with this lunch"
+            hint="Tap to remove"
+            options={day.sides}
+            selected={sides}
+            onToggle={(side) => onChange({ sides: toggle(sides, side) })}
+          />
+        )}
+      </Stack>
 
       {eatingAtSchool && (
-        <ChipSelect
-          title="Sides to include"
-          hint="Tap to remove"
-          options={day.sides}
-          selected={sides}
-          onToggle={(side) => onChange({ sides: toggle(sides, side) })}
-        />
-      )}
-
-      {eatingAtSchool && (
-        <ChipSelect
-          title="Fruit & veggie bar"
-          hint="May include — not guaranteed daily"
-          options={FRUIT_VEGGIE_BAR}
-          selected={plan.extras}
-          onToggle={(extra) => onChange({ extras: toggle(plan.extras, extra) })}
-        />
+        <Stack spacing={2}>
+          <ChipSelect
+            title="Veggie from the bar"
+            hint="Pick 1 · may vary by day"
+            options={VEGGIE_BAR}
+            selected={plan.extras}
+            onToggle={(item) => onChange({ extras: toggleBarPick(plan.extras, item) })}
+            single
+          />
+          <ChipSelect
+            title="Fruit from the bar"
+            hint="Pick 1 · may vary by day"
+            options={FRUIT_BAR}
+            selected={plan.extras}
+            onToggle={(item) => onChange({ extras: toggleBarPick(plan.extras, item) })}
+            single
+          />
+        </Stack>
       )}
 
       <ChoiceCarousel
@@ -188,23 +242,53 @@ export function DayPlanner({ day, plan, onChange, onApplyToWeek }: DayPlannerPro
             )
           }
         />
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-          {BREAKFAST_NOTE}
-        </Typography>
+        {!plan.breakfast && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+            {BREAKFAST_NOTE}
+          </Typography>
+        )}
+        {plan.breakfast && (
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            {(
+              [
+                ['grain', 'Whole-grain item', BREAKFAST_GRAINS],
+                ['fruit', 'Fruit or juice', BREAKFAST_FRUIT],
+                ['milk', 'Breakfast milk', MILK_CHOICES],
+              ] as const
+            ).map(([key, title, options]) => (
+              <ChipSelect
+                key={key}
+                title={title}
+                hint="Pick 1"
+                options={[...options]}
+                selected={plan.breakfastPicks?.[key] ? [plan.breakfastPicks[key]!] : []}
+                onToggle={(item) => {
+                  const picks: BreakfastPicks = { ...plan.breakfastPicks };
+                  picks[key] = picks[key] === item ? undefined : item;
+                  onChange({ breakfastPicks: picks });
+                }}
+                single
+              />
+            ))}
+          </Stack>
+        )}
       </Box>
 
       <Box>
-        <Typography variant="h3" component="h3" sx={{ mb: 1 }}>
-          Note for staff
-        </Typography>
+        <SectionHeader
+          title={`Note for ${fmtWeekday(day.date)}`}
+          hint={`Only for ${fmtMonthDayLong(day.date)}`}
+        />
         <TextField
           fullWidth
           multiline
           minRows={2}
           placeholder="e.g. Early pickup at 3:00 for a dentist appointment"
           value={plan.note}
+          {...autofill('note', plan.note, (note) => onChange({ note }))}
           onChange={(e) => onChange({ note: e.target.value })}
-          slotProps={{ htmlInput: { 'aria-label': 'Note for staff' } }}
+          helperText={`Goes in the email under ${fmtWeekday(day.date)} only — other days keep their own notes.`}
+          slotProps={{ htmlInput: { 'aria-label': `Note for staff, ${fmtLongDate(day.date)} only` } }}
         />
       </Box>
     </Stack>

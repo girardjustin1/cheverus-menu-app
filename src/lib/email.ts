@@ -1,4 +1,5 @@
 import { fmtLongDate, fmtMonthDay } from './dates';
+import { DIET_PROFILE_LABELS, lunchFit } from './diet';
 import { dayStatus, lunchLabel, sidesFor, type PlanState, type Week } from './plan';
 
 export interface EmailDraft {
@@ -7,13 +8,25 @@ export interface EmailDraft {
   body: string;
 }
 
-export function buildEmail(week: Week, plan: PlanState): EmailDraft {
-  const { childName, classroom, parentName, to } = plan.details;
+export interface EmailScope {
+  /** When set, the email covers only this date instead of the whole week. */
+  date?: string;
+  /** Sign-off name when the plan doesn't set one (e.g. the signed-in account). */
+  fallbackSignOff?: string;
+  /** Leave out days before this date (ISO) — past days are already done. */
+  fromDate?: string;
+}
+
+export function buildEmail(week: Week, plan: PlanState, scope: EmailScope = {}): EmailDraft {
+  const { childName, classroom, teacherName, parentName, to } = plan.details;
   const child = childName.trim() || 'my child';
   const who = classroom.trim() ? `${child} (${classroom.trim()})` : child;
 
   const sections: string[] = [];
-  for (const day of week.days) {
+  const days = scope.date
+    ? week.days.filter((d) => d.date === scope.date)
+    : week.days.filter((d) => !scope.fromDate || d.date >= scope.fromDate);
+  for (const day of days) {
     const dayPlan = plan.days[day.date];
     const status = dayStatus(day, dayPlan);
     if (status === 'no-school') {
@@ -23,10 +36,17 @@ export function buildEmail(week: Week, plan: PlanState): EmailDraft {
     if (status === 'empty' || !dayPlan) continue;
 
     const lines = [fmtLongDate(day.date)];
-    if (dayPlan.breakfast) lines.push('• Breakfast: Grab & Go breakfast, please');
+    if (dayPlan.breakfast) {
+      const { grain, fruit, milk } = dayPlan.breakfastPicks ?? {};
+      const picks = [grain, fruit, milk].filter(Boolean);
+      lines.push(picks.length ? `• Breakfast: Grab & Go — ${picks.join(', ')}` : '• Breakfast: Grab & Go breakfast, please');
+    }
     if (dayPlan.lunch) {
       const lunch = lunchLabel(day, dayPlan.lunch);
       lines.push(`• Lunch: ${dayPlan.lunch === 'hot' && day.theme ? `${lunch} ("${day.theme}" hot lunch)` : lunch}`);
+      if (lunchFit(day, dayPlan.lunch, plan.diet).fit === 'ask') {
+        lines.push(`• Please confirm this works for a ${DIET_PROFILE_LABELS[plan.diet.profile].toLowerCase()} diet`);
+      }
       if (dayPlan.lunch !== 'home') {
         const sides = sidesFor(day, dayPlan);
         const skipped = day.sides.filter((s) => !sides.includes(s));
@@ -47,18 +67,35 @@ export function buildEmail(week: Week, plan: PlanState): EmailDraft {
     sections.push(lines.join('\n'));
   }
 
-  const subject = `${childName.trim() || 'Lunch'} — lunch & Extended Day plan, week of ${fmtMonthDay(week.monday)}`;
-  const greeting = 'Hi Cheverus team,';
-  const intro = `Here is ${who}'s lunch and Extended Day plan for the week of Monday, ${fmtMonthDay(week.monday)}:`;
+  const when = scope.date ? fmtLongDate(scope.date) : `the week of Monday, ${fmtMonthDay(week.monday)}`;
+  const subjectWhen = scope.date ? fmtLongDate(scope.date) : `week of ${fmtMonthDay(week.monday)}`;
+  const subject = `${childName.trim() || 'Lunch'} — lunch & Extended Day plan, ${subjectWhen}`;
+  const signOff = parentName.trim() || scope.fallbackSignOff?.trim() || '';
+  const teacher = teacherName.trim();
+  const greeting = teacher ? `Hi ${teacher} and the Cheverus team,` : 'Hi Cheverus team,';
+  const intro = `Here is ${who}'s lunch and Extended Day plan for ${when}:`;
   const body = [
     greeting,
     intro,
-    sections.length ? sections.join('\n\n') : '(No days planned yet.)',
+    ...dietNotes(child, plan),
+    sections.length ? sections.join('\n\n') : scope.date ? '(Nothing planned for this day yet.)' : '(No days planned yet.)',
     'Please let me know if anything on the menu changes. Thank you!',
-    parentName.trim() ? `Best,\n${parentName.trim()}` : 'Best,',
+    signOff ? `Best,\n${signOff}` : 'Best,',
   ].join('\n\n');
 
   return { to: to.trim(), subject, body };
+}
+
+function dietNotes(child: string, plan: PlanState): string[] {
+  const notes: string[] = [];
+  const { profile, nutAllergy } = plan.diet;
+  if (profile !== 'none') notes.push(`Diet: ${child} eats ${DIET_PROFILE_LABELS[profile].toLowerCase()}.`);
+  if (nutAllergy) {
+    notes.push(
+      `Allergy: ${child} has a nut allergy. The posted menu doesn't list allergens, so please double-check each meal and snack.`,
+    );
+  }
+  return notes.length ? [notes.join('\n')] : [];
 }
 
 export function mailtoHref(draft: EmailDraft): string {

@@ -12,7 +12,8 @@
     "build-storybook": "storybook build",
     "test": "vitest run --project unit",
     "test:stories": "vitest run --project storybook",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "prototype": "vite --port 5190 --strictPort --open /prototype.html"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

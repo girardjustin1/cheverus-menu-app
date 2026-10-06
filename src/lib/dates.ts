@@ -11,6 +11,19 @@ export function toISODate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function addDays(iso: string, days: number): string {
+  const date = parseISODate(iso);
+  date.setDate(date.getDate() + days);
+  return toISODate(date);
+}
+
+/** "Today" / "Tomorrow" for those dates, otherwise undefined. */
+export function relativeDayLabel(iso: string, today: string): string | undefined {
+  if (iso === today) return 'Today';
+  if (iso === addDays(today, 1)) return 'Tomorrow';
+  return undefined;
+}
+
 /** Monday of the week containing `iso`. */
 export function mondayOf(iso: string): string {
   const date = parseISODate(iso);

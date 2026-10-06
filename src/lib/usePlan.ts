@@ -1,58 +1,78 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import type { DietPrefs } from './diet';
 import { emptyDayPlan, emptyPlan, type DayPlan, type ParentDetails, type PlanState } from './plan';
+import { useStoredState } from './storage';
 
-const STORAGE_KEY = 'cheverus-lunch-plan:v1';
-
-function load(): PlanState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...emptyPlan(), ...JSON.parse(raw) };
-  } catch {
-    // Private mode or corrupt data — start fresh.
-  }
-  return emptyPlan();
+/** Fill in fields added after a plan was saved, so older saves keep loading. */
+function revive(saved: PlanState): PlanState {
+  const base = emptyPlan();
+  return {
+    ...base,
+    ...saved,
+    details: {
+      ...base.details,
+      ...saved.details,
+      // Only Girl / Boy are offered now; drop anything else saved earlier.
+      gender: saved.details?.gender === 'girl' || saved.details?.gender === 'boy' ? saved.details.gender : '',
+    },
+    diet: { ...base.diet, ...saved.diet },
+    // Plans saved before sign-up steps existed: already set up if a child is named.
+    onboarded: saved.onboarded ?? Boolean(saved.details?.childName),
+  };
 }
 
-/** Plan state persisted to this browser only. Nothing leaves the device. */
-export function usePlan(initial?: PlanState) {
-  const [plan, setPlan] = useState<PlanState>(() => initial ?? load());
+/**
+ * Plan state saved to this browser under `storageKey` (per account). Pass `null` to keep it
+ * in memory only. Nothing leaves the device.
+ */
+export function usePlan(storageKey: string | null, initial?: PlanState) {
+  const [plan, setPlan] = useStoredState<PlanState>(storageKey, () => initial ?? emptyPlan(), revive);
 
-  useEffect(() => {
-    if (initial) return; // Stories pass fixtures; don't overwrite real data.
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
-    } catch {
-      // Storage unavailable — the plan still works for this session.
-    }
-  }, [plan, initial]);
-
-  const updateDay = useCallback((date: string, patch: Partial<DayPlan>) => {
-    setPlan((p) => ({
-      ...p,
-      days: { ...p.days, [date]: { ...emptyDayPlan(), ...p.days[date], ...patch } },
-    }));
-  }, []);
+  const updateDay = useCallback(
+    (date: string, patch: Partial<DayPlan>) => {
+      setPlan((p) => ({
+        ...p,
+        days: { ...p.days, [date]: { ...emptyDayPlan(), ...p.days[date], ...patch } },
+      }));
+    },
+    [setPlan],
+  );
 
   /** Apply one field to several dates at once ("same all week"). */
-  const updateDays = useCallback((dates: string[], patch: Partial<DayPlan>) => {
-    setPlan((p) => {
-      const days = { ...p.days };
-      for (const date of dates) days[date] = { ...emptyDayPlan(), ...days[date], ...patch };
-      return { ...p, days };
-    });
-  }, []);
+  const updateDays = useCallback(
+    (dates: string[], patch: Partial<DayPlan>) => {
+      setPlan((p) => {
+        const days = { ...p.days };
+        for (const date of dates) days[date] = { ...emptyDayPlan(), ...days[date], ...patch };
+        return { ...p, days };
+      });
+    },
+    [setPlan],
+  );
 
-  const updateDetails = useCallback((patch: Partial<ParentDetails>) => {
-    setPlan((p) => ({ ...p, details: { ...p.details, ...patch } }));
-  }, []);
+  /** Apply a different patch to each date, e.g. a filled-in week. */
+  const patchDays = useCallback(
+    (patches: Record<string, Partial<DayPlan>>) => {
+      setPlan((p) => {
+        const days = { ...p.days };
+        for (const [date, patch] of Object.entries(patches)) days[date] = { ...emptyDayPlan(), ...days[date], ...patch };
+        return { ...p, days };
+      });
+    },
+    [setPlan],
+  );
 
-  const clearDates = useCallback((dates: string[]) => {
-    setPlan((p) => {
-      const days = { ...p.days };
-      for (const date of dates) delete days[date];
-      return { ...p, days };
-    });
-  }, []);
+  const updateDiet = useCallback(
+    (patch: Partial<DietPrefs>) => setPlan((p) => ({ ...p, diet: { ...p.diet, ...patch } })),
+    [setPlan],
+  );
 
-  return { plan, updateDay, updateDays, updateDetails, clearDates };
+  const finishOnboarding = useCallback(() => setPlan((p) => ({ ...p, onboarded: true })), [setPlan]);
+
+  const updateDetails = useCallback(
+    (patch: Partial<ParentDetails>) => setPlan((p) => ({ ...p, details: { ...p.details, ...patch } })),
+    [setPlan],
+  );
+
+  return { plan, updateDay, updateDays, patchDays, updateDetails, updateDiet, finishOnboarding };
 }

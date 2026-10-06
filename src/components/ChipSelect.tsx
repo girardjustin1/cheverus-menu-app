@@ -9,14 +9,16 @@ export interface ChipSelectProps {
   options: string[];
   selected: string[];
   onToggle: (option: string) => void;
+  /** At most one pick: announces as a radio group. */
+  single?: boolean;
 }
 
 /** Multi-select chips, e.g. which sides to keep or fruit & veggie bar extras. */
-export function ChipSelect({ title, hint, options, selected, onToggle }: ChipSelectProps) {
+export function ChipSelect({ title, hint, options, selected, onToggle, single }: ChipSelectProps) {
   return (
     <Box component="section" aria-label={title}>
       <SectionHeader title={title} hint={hint} />
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Box role={single ? 'radiogroup' : 'group'} aria-label={title} sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         {options.map((option) => {
           const on = selected.includes(option);
           return (
@@ -27,7 +29,7 @@ export function ChipSelect({ title, hint, options, selected, onToggle }: ChipSel
               color={on ? 'primary' : 'default'}
               variant={on ? 'filled' : 'outlined'}
               icon={on ? <CheckRoundedIcon /> : undefined}
-              aria-pressed={on}
+              {...(single ? { role: 'radio', 'aria-checked': on } : { 'aria-pressed': on })}
             />
           );
         })}

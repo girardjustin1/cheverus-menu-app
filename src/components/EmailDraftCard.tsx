@@ -1,4 +1,3 @@
-import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import {
   Alert,
@@ -8,13 +7,14 @@ import {
   CardContent,
   Snackbar,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
 import { mailtoHref, type EmailDraft } from '../lib/email';
+import type { SendMethod } from '../lib/history';
 import type { ParentDetails } from '../lib/plan';
 import { CHEVERUS } from '../theme/theme';
+import { FamilyInfoForm } from './FamilyInfoForm';
 
 export interface EmailDraftCardProps {
   draft: EmailDraft;
@@ -22,6 +22,12 @@ export interface EmailDraftCardProps {
   onDetailsChange: (patch: Partial<ParentDetails>) => void;
   plannedDays: number;
   schoolDays: number;
+  /** Overrides the progress line, e.g. in single-day mode. */
+  statusText?: string;
+  /** Called when the email is copied or opened in Mail — used to log the order. */
+  onSent?: (method: SendMethod) => void;
+  /** When given, details show as a summary with an Edit button instead of inline fields. */
+  onEditDetails?: () => void;
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -33,11 +39,21 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function EmailDraftCard({ draft, details, onDetailsChange, plannedDays, schoolDays }: EmailDraftCardProps) {
+export function EmailDraftCard({
+  draft,
+  details,
+  onDetailsChange,
+  plannedDays,
+  schoolDays,
+  statusText,
+  onSent,
+  onEditDetails,
+}: EmailDraftCardProps) {
   const [toast, setToast] = useState<string | null>(null);
 
   const copy = async (label: string, text: string) => {
-    setToast((await copyText(text)) ? `${label} copied` : 'Copy failed — long-press the text to copy');
+    const ok = await copyText(text);
+    setToast(ok ? `${label} copied` : 'Copy failed — long-press the text to copy');
   };
 
   return (
@@ -49,40 +65,31 @@ export function EmailDraftCard({ draft, details, onDetailsChange, plannedDays, s
         Draft the email
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {plannedDays === schoolDays
-          ? `All ${schoolDays} school days are planned.`
-          : `${plannedDays} of ${schoolDays} school days fully planned. Days you haven't touched are left out.`}
+        {statusText ??
+          (plannedDays === schoolDays
+            ? `All ${schoolDays} school days are planned.`
+            : `${plannedDays} of ${schoolDays} school days fully planned. Days you haven't touched are left out.`)}
       </Typography>
 
-      <Stack spacing={1.5} sx={{ mb: 2 }}>
-        <TextField
-          label="Child's name"
-          value={details.childName}
-          onChange={(e) => onDetailsChange({ childName: e.target.value })}
-          size="small"
-        />
-        <TextField
-          label="Grade / classroom"
-          placeholder="e.g. Grade 2"
-          value={details.classroom}
-          onChange={(e) => onDetailsChange({ classroom: e.target.value })}
-          size="small"
-        />
-        <TextField
-          label="Your name (sign-off)"
-          value={details.parentName}
-          onChange={(e) => onDetailsChange({ parentName: e.target.value })}
-          size="small"
-        />
-        <TextField
-          label="Send to"
-          type="email"
-          placeholder="name@example.com"
-          value={details.to}
-          onChange={(e) => onDetailsChange({ to: e.target.value })}
-          size="small"
-        />
-      </Stack>
+      {onEditDetails ? (
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2, p: 1.5, borderRadius: '8px', bgcolor: 'action.hover' }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+              For: {[details.childName, details.classroom, details.teacherName].filter(Boolean).join(' · ') || 'not set'}
+            </Typography>
+          </Box>
+          <Button size="small" variant="outlined" onClick={onEditDetails} sx={{ flexShrink: 0 }}>
+            Edit info
+          </Button>
+        </Stack>
+      ) : (
+        <Box sx={{ mb: 2 }}>
+          <FamilyInfoForm details={details} onChange={onDetailsChange} />
+        </Box>
+      )}
 
       <Card sx={{ bgcolor: '#FFFFFF' }}>
         <CardContent>
@@ -114,14 +121,6 @@ export function EmailDraftCard({ draft, details, onDetailsChange, plannedDays, s
       </Card>
 
       <Stack spacing={1} sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<ContentCopyRoundedIcon />}
-          onClick={() => copy('Email', draft.body)}
-        >
-          Copy email
-        </Button>
         <Stack direction="row" spacing={1}>
           <Button fullWidth variant="outlined" onClick={() => copy('Subject', draft.subject)}>
             Copy subject
@@ -132,6 +131,7 @@ export function EmailDraftCard({ draft, details, onDetailsChange, plannedDays, s
             color="secondary"
             startIcon={<MailOutlineRoundedIcon />}
             href={mailtoHref(draft)}
+            onClick={() => onSent?.('mail')}
             sx={{ '&:hover': { bgcolor: CHEVERUS.yellow } }}
           >
             Open in Mail
