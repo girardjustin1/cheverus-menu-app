@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { isPublished, type MenuMonth } from '../data/months';
 import { fmtMonthDay, fmtWeekdayShort, mondayOf, parseISODate, relativeDayLabel } from '../lib/dates';
 import { defaultWeek, firstPlannableDay, groupWeeks, isPastDate, isPastWeek, type PlanMode } from '../lib/plan';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { APP_MAX_WIDTH, CHEVERUS } from '../theme/theme';
 import type { WeekProgress } from './WeekSelector';
 
 export interface PlanSelection {
@@ -147,11 +147,11 @@ export function PlanSetupDialog({ open, current, months, today, progress = {}, f
       aria-labelledby="plan-dialog-title"
       scroll="paper"
       // Full-height card the width of the app column (the whole screen on a phone).
-      slotProps={{ paper: { sx: { maxWidth: IPHONE_17.width + 28, mx: 'auto', borderRadius: 0 } } }}
+      slotProps={{ paper: { sx: { maxWidth: APP_MAX_WIDTH, mx: 'auto', borderRadius: 0 } } }}
     >
-      <DialogTitle id="plan-dialog-title" sx={{ pr: 7 }}>
+      <DialogTitle id="plan-dialog-title" sx={{ pr: 7, pt: 'calc(env(safe-area-inset-top) + 16px)' }}>
         {firstVisit && firstName ? `Hi ${firstName}! ` : ''}What are we planning?
-        <IconButton aria-label="Close" onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
+        <IconButton aria-label="Close" onClick={onClose} sx={{ position: 'absolute', right: 8, top: 'calc(env(safe-area-inset-top) + 8px)' }}>
           <CloseRoundedIcon />
         </IconButton>
       </DialogTitle>
@@ -265,7 +265,7 @@ export function PlanSetupDialog({ open, current, months, today, progress = {}, f
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
+      <DialogActions sx={{ p: 2, pb: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
         <Button
           fullWidth
           size="large"

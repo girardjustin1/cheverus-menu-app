@@ -1,5 +1,5 @@
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { CHEVERUS, APP_MAX_WIDTH } from '../theme/theme';
 
 export interface SplashProps {
   /** Shows an error with a Try again button instead of the spinner. */
@@ -13,7 +13,7 @@ export function Splash({ error, onRetry }: SplashProps) {
     <Box
       sx={{
         minHeight: '100dvh',
-        maxWidth: IPHONE_17.width + 28,
+        maxWidth: APP_MAX_WIDTH,
         mx: 'auto',
         bgcolor: 'primary.main',
         color: 'primary.contrastText',

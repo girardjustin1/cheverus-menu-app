@@ -16,6 +16,12 @@ export const CHEVERUS = {
 /** Apple HIG minimum touch target, in CSS px. */
 export const TOUCH_TARGET = 44;
 
+/** The app fills the screen on every phone (up to the widest Androids); larger screens get a centered column. */
+export const APP_MAX_WIDTH = 480;
+
+/** Small phones (iPhone SE / mini, 320–359px wide): tighten layouts that would otherwise wrap or clip. */
+export const NARROW = '@media (max-width: 359.98px)';
+
 /** iPhone 17 logical viewport, in CSS px. */
 export const IPHONE_17 = { width: 402, height: 874 } as const;
 

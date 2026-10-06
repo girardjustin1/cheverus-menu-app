@@ -3,7 +3,7 @@ import { Box, Button, Typography } from '@mui/material';
 import { useState } from 'react';
 import { AppShell } from '../components/AppShell';
 import { HashRouter } from '../lib/RouterProvider';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { CHEVERUS, APP_MAX_WIDTH } from '../theme/theme';
 import { AutofillProvider } from './AutofillProvider';
 
 /**
@@ -16,13 +16,14 @@ export function Prototype() {
     <>
       <Box
         sx={{
-          maxWidth: IPHONE_17.width + 28,
+          maxWidth: APP_MAX_WIDTH,
           mx: 'auto',
           display: 'flex',
           alignItems: 'center',
           gap: 1,
           px: 2,
           py: 0.5,
+          pt: 'calc(env(safe-area-inset-top) + 4px)',
           bgcolor: CHEVERUS.navyDeep,
           color: CHEVERUS.yellow,
         }}
