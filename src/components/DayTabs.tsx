@@ -2,7 +2,7 @@ import { Box, Tab, Tabs, Typography } from '@mui/material';
 import type { MenuDay } from '../data/menu';
 import { fmtWeekday, fmtWeekdayShort, parseISODate, relativeDayLabel } from '../lib/dates';
 import type { DayStatus } from '../lib/plan';
-import { CHEVERUS } from '../theme/theme';
+import { CHEVERUS, NARROW } from '../theme/theme';
 
 export interface DayTabsProps {
   days: MenuDay[];
@@ -39,7 +39,7 @@ export function DayTabs({ days, selected, onSelect, statuses, today }: DayTabsPr
       variant="fullWidth"
       aria-label="Choose a day"
       slotProps={{ indicator: { sx: { display: 'none' } } }}
-      sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', px: 1, py: 1 }}
+      sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', px: 1, py: 1, [NARROW]: { px: 0.5 } }}
     >
       {days.map((day) => {
         const status = statuses[day.date] ?? 'empty';
@@ -54,7 +54,7 @@ export function DayTabs({ days, selected, onSelect, statuses, today }: DayTabsPr
             value={day.date}
             disabled={past}
             aria-label={`${relative ? `${relative}, ` : ''}${fmtWeekday(day.date)} ${parseISODate(day.date).getDate()}, ${past ? 'past' : STATUS_LABEL[status]}`}
-            sx={{ p: 0, mx: 0.5, minHeight: 72, opacity: past ? 0.35 : status === 'no-school' && !active ? 0.55 : 1 }}
+            sx={{ p: 0, mx: 0.5, [NARROW]: { mx: 0.25 }, minHeight: 72, opacity: past ? 0.35 : status === 'no-school' && !active ? 0.55 : 1 }}
             label={
               <Box
                 sx={{
@@ -73,7 +73,16 @@ export function DayTabs({ days, selected, onSelect, statuses, today }: DayTabsPr
               >
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 800, lineHeight: 1.2, color: fg, textTransform: relative ? 'uppercase' : 'none', fontSize: relative ? 10 : undefined, letterSpacing: relative ? '0.06em' : undefined }}
+                  sx={{
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    color: fg,
+                    whiteSpace: 'nowrap',
+                    textTransform: relative ? 'uppercase' : 'none',
+                    // "TOMORROW" must fit a 1/5-width tile even on a 320px phone.
+                    fontSize: relative ? 'clamp(8px, 2.6vw, 10px)' : undefined,
+                    letterSpacing: relative ? 'clamp(0px, 0.15vw, 0.6px)' : undefined,
+                  }}
                 >
                   {relative ?? fmtWeekdayShort(day.date)}
                 </Typography>

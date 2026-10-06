@@ -9,7 +9,7 @@ import type { PlanMode, PlanState } from '../lib/plan';
 import { usePlan } from '../lib/usePlan';
 import { useRouter } from '../lib/router';
 import { EnsureRouter } from '../lib/RouterProvider';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { APP_MAX_WIDTH, CHEVERUS, NARROW } from '../theme/theme';
 import { AppHeader } from './AppHeader';
 import { AppMenu, type AppView } from './AppMenu';
 import type { ProfileSection } from './FamilyInfoForm';
@@ -20,7 +20,7 @@ import { LoginScreen } from './LoginScreen';
 import { LunchPlanner } from './LunchPlanner';
 import { OrderHistory } from './OrderHistory';
 
-const SHELL_WIDTH = IPHONE_17.width + 28;
+const SHELL_WIDTH = APP_MAX_WIDTH;
 const MENU_WIDTH = 296;
 const SLIDE = 'transform 260ms cubic-bezier(0.2, 0, 0, 1)';
 
@@ -199,7 +199,14 @@ function SignedIn({
                     ? go({ params: { modal: 'plan', menu: undefined } })
                     : go({ path: '/plan', params: { ...lastPlanParams.current, modal: 'plan' } })
                 }
-                sx={{ flexShrink: 0, px: 2, color: CHEVERUS.navy, bgcolor: CHEVERUS.yellow, '&:hover': { bgcolor: CHEVERUS.yellow } }}
+                sx={{
+                  flexShrink: 0,
+                  px: 2,
+                  color: CHEVERUS.navy,
+                  bgcolor: CHEVERUS.yellow,
+                  '&:hover': { bgcolor: CHEVERUS.yellow },
+                  [NARROW]: { px: 1.5, '& .MuiButton-startIcon': { display: 'none' } },
+                }}
               >
                 Plan
               </Button>

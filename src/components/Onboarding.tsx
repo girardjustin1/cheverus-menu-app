@@ -2,7 +2,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Box, Button, LinearProgress, Stack, Typography } from '@mui/material';
 import type { Account } from '../lib/account';
 import type { ParentDetails } from '../lib/plan';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { CHEVERUS, APP_MAX_WIDTH } from '../theme/theme';
 import { ChildInfoFields, ParentInfoFields, type ProfileSection } from './FamilyInfoForm';
 
 export interface OnboardingProps {
@@ -27,7 +27,7 @@ export function Onboarding({ step, onStepChange, account, onAccountChange, detai
   const firstName = account.fullName.split(/\s+/)[0];
 
   return (
-    <Box sx={{ minHeight: '100dvh', maxWidth: IPHONE_17.width + 28, mx: 'auto', display: 'flex', flexDirection: 'column', bgcolor: 'primary.main' }}>
+    <Box sx={{ minHeight: '100dvh', maxWidth: APP_MAX_WIDTH, mx: 'auto', display: 'flex', flexDirection: 'column', bgcolor: 'primary.main' }}>
       <Stack sx={{ color: 'primary.contrastText', px: 3, pt: 'calc(env(safe-area-inset-top) + 24px)', pb: 3 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Box

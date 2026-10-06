@@ -1,7 +1,7 @@
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { Box, IconButton, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { CHEVERUS } from '../theme/theme';
+import { CHEVERUS, NARROW } from '../theme/theme';
 
 export interface AppHeaderProps {
   title?: string;
@@ -33,7 +33,7 @@ export function AppHeader({
         borderBottom: `4px solid ${CHEVERUS.yellow}`,
       }}
     >
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', [NARROW]: { gap: 0.25 } }}>
         {onMenuClick && (
           <IconButton
             color="inherit"
@@ -49,13 +49,13 @@ export function AppHeader({
           component="img"
           src="/cheverus-logo.png"
           alt="Cheverus Catholic School logo"
-          sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#fff', flexShrink: 0 }}
+          sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#fff', flexShrink: 0, [NARROW]: { width: 32, height: 32 } }}
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h3" component="h1" sx={{ fontSize: '1.15rem', lineHeight: 1.2 }} noWrap>
+          <Typography variant="h3" component="h1" sx={{ fontSize: 'clamp(1rem, 4.6vw, 1.15rem)', lineHeight: 1.2 }} noWrap>
             {title}
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.85, display: 'block' }} noWrap>
+          <Typography variant="caption" sx={{ opacity: 0.85, display: 'block', [NARROW]: { display: 'none' } }} noWrap>
             {subtitle}
           </Typography>
         </Box>

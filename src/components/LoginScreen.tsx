@@ -3,7 +3,7 @@ import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { useState, type FormEvent } from 'react';
 import { validateAccount, type Account } from '../lib/account';
 import { useAutofill } from '../prototype/autofill';
-import { CHEVERUS, IPHONE_17 } from '../theme/theme';
+import { CHEVERUS, APP_MAX_WIDTH } from '../theme/theme';
 
 export interface LoginScreenProps {
   /** May be async; a rejected ApiError's `fields` / message are shown on the form. */
@@ -41,7 +41,7 @@ export function LoginScreen({ onSignIn, initial }: LoginScreenProps) {
     <Box
       sx={{
         minHeight: '100dvh',
-        maxWidth: IPHONE_17.width + 28,
+        maxWidth: APP_MAX_WIDTH,
         mx: 'auto',
         display: 'flex',
         flexDirection: 'column',

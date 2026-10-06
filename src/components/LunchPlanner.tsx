@@ -24,6 +24,7 @@ import {
 import { DEFAULT_PATH, useRouter } from '../lib/router';
 import { EnsureRouter } from '../lib/RouterProvider';
 import { usePlan } from '../lib/usePlan';
+import { NARROW } from '../theme/theme';
 import { useScrollCollapse } from '../lib/useScrollCollapse';
 import { ComingSoonMonth } from './ComingSoonMonth';
 import { DayPlanner, type WeekWideField } from './DayPlanner';
@@ -306,6 +307,9 @@ function LunchPlannerInner({
           pt: 1.5,
           pb: 'calc(env(safe-area-inset-bottom) + 12px)',
           background: 'linear-gradient(to top, rgba(251,250,244,1) 75%, rgba(251,250,244,0))',
+          // Keep both labels on one line on every phone; small phones drop the icons.
+          '& .MuiButton-root': { whiteSpace: 'nowrap', px: 1.5 },
+          [NARROW]: { gap: 0.75, '& .MuiButton-startIcon': { display: 'none' } },
         }}
       >
         <Button
