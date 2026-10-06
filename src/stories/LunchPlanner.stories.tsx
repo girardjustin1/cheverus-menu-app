@@ -7,7 +7,7 @@ const meta = {
   title: 'Screens/Lunch Planner',
   component: LunchPlanner,
   parameters: { layout: 'fullscreen' },
-  args: { today: STORY_TODAY, initialMode: 'week', storageKey: null },
+  args: { today: STORY_TODAY, initialMode: 'week' },
 } satisfies Meta<typeof LunchPlanner>;
 
 export default meta;

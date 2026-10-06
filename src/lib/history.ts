@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from './api';
 import type { MenuDay } from '../data/menu';
 import type { EmailDraft } from './email';
 import { lunchLabel, type PlanMode, type PlanState } from './plan';
-import { useStoredState } from './storage';
 
 export type SendMethod = 'copy' | 'mail';
 /** 'draft' = saved but not sent yet. */
@@ -118,8 +118,41 @@ export interface LogOrderInput {
   dayEmails?: DayEmail[];
 }
 
-export function useOrderHistory(storageKey: string | null, initial: OrderRecord[] = []) {
-  const [history, setHistory] = useStoredState<OrderRecord[]>(storageKey, () => initial);
+/**
+ * Drafts and sent emails. `remote` loads them from /api/orders and saves each change there;
+ * otherwise they live in memory (stories, prototype).
+ */
+export function useOrderHistory(remote: boolean, initial: OrderRecord[] = []) {
+  const [history, setHistoryState] = useState<OrderRecord[]>(initial);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(remote ? 'loading' : 'ready');
+  const [saveError, setSaveError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const historyRef = useRef(history);
+  const setHistory = useCallback((next: OrderRecord[]) => {
+    historyRef.current = next;
+    setHistoryState(next);
+  }, []);
+
+  useEffect(() => {
+    if (!remote) return;
+    let alive = true;
+    api
+      .listOrders()
+      .then((r) => {
+        if (!alive) return;
+        setHistory(r.orders);
+        setStatus('ready');
+      })
+      .catch(() => alive && setStatus('error'));
+    return () => {
+      alive = false;
+    };
+  }, [remote, attempt, setHistory]);
+
+  const retry = useCallback(() => {
+    setStatus('loading');
+    setAttempt((n) => n + 1);
+  }, []);
 
   const logOrder = useCallback(
     (input: LogOrderInput) => {
@@ -135,12 +168,21 @@ export function useOrderHistory(storageKey: string | null, initial: OrderRecord[
         days: input.days,
         dayEmails: input.dayEmails,
       };
-      setHistory((h) => addOrder(h, record));
+      const next = addOrder(historyRef.current, record);
+      setHistory(next);
+      // next[0] carries the id the list settled on (a re-saved draft keeps its id).
+      if (remote) api.saveOrder(next[0]).then(() => setSaveError(false), () => setSaveError(true));
     },
-    [setHistory],
+    [remote, setHistory],
   );
 
-  const removeOrder = useCallback((id: string) => setHistory((h) => h.filter((o) => o.id !== id)), [setHistory]);
+  const removeOrder = useCallback(
+    (id: string) => {
+      setHistory(historyRef.current.filter((o) => o.id !== id));
+      if (remote) api.deleteOrder(id).then(() => setSaveError(false), () => setSaveError(true));
+    },
+    [remote, setHistory],
+  );
 
-  return { history, logOrder, removeOrder };
+  return { history, status, saveError, retry, logOrder, removeOrder };
 }

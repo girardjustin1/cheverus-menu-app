@@ -1,0 +1,14 @@
+# Cheverus Lunch Planner on Netlify.
+# Functions in netlify/functions serve /api/*; Netlify Database (Postgres) is provisioned
+# automatically and migrations in netlify/database/migrations run before each deploy goes live.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

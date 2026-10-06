@@ -34,8 +34,6 @@ import { PlanSetupDialog, type PlanSelection } from './PlanSetupDialog';
 import { WeekSelector, type WeekProgress } from './WeekSelector';
 
 export interface LunchPlannerProps {
-  /** localStorage key for the plan; `null` keeps it in memory (stories). */
-  storageKey?: string | null;
   /** Fixture plan for stories. */
   initialPlan?: PlanState;
   /** ISO date used to pick the starting month and week. Defaults to today. */
@@ -78,7 +76,6 @@ export function LunchPlanner(props: LunchPlannerProps) {
 }
 
 function LunchPlannerInner({
-  storageKey = null,
   initialPlan,
   today: todayProp,
   months = MENU_MONTHS,
@@ -89,7 +86,7 @@ function LunchPlannerInner({
   onEditDetails,
 }: LunchPlannerProps) {
   const [today] = useState(() => todayProp ?? toISODate(new Date()));
-  const ownPlan = usePlan(planApi ? null : storageKey, initialPlan);
+  const ownPlan = usePlan(false, initialPlan);
   const { plan, updateDay, updateDays, patchDays, updateDetails, updateDiet } = planApi ?? ownPlan;
   const [fillStatus, setFillStatus] = useState<string>();
   const [toast, setToast] = useState<{ text: string; ok: boolean } | null>(null);
