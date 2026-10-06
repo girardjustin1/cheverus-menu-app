@@ -33,8 +33,8 @@ export interface DayPlan {
   note: string;
 }
 
-/** Grades for the dropdown. Cheverus serves early childhood through grade 8. */
-export const GRADES = ['Pre-K', 'Kindergarten', ...Array.from({ length: 8 }, (_, i) => `Grade ${i + 1}`)];
+/** Grades for the dropdown. Cheverus serves early childhood (Preschool, Pre-K) through grade 8. */
+export const GRADES = ['Preschool', 'Pre-K', 'Kindergarten', ...Array.from({ length: 8 }, (_, i) => `Grade ${i + 1}`)];
 
 export type ChildGender = 'girl' | 'boy';
 export const GENDER_LABELS: Record<ChildGender, string> = {

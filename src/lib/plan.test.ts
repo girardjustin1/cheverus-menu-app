@@ -110,3 +110,11 @@ describe('toggleBarPick — one veggie and one fruit', () => {
     expect(toggleBarPick(extras, 'Fruit Cups')).toEqual(['Cucumbers']);
   });
 });
+
+describe('grades', () => {
+  it('offers Preschool and Pre-K before Kindergarten and Grades 1–8', async () => {
+    const { GRADES } = await import('./plan');
+    expect(GRADES.slice(0, 4)).toEqual(['Preschool', 'Pre-K', 'Kindergarten', 'Grade 1']);
+    expect(GRADES.at(-1)).toBe('Grade 8');
+  });
+});
