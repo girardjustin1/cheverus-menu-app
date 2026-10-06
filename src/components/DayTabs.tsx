@@ -79,9 +79,10 @@ export function DayTabs({ days, selected, onSelect, statuses, today }: DayTabsPr
                     color: fg,
                     whiteSpace: 'nowrap',
                     textTransform: relative ? 'uppercase' : 'none',
-                    // "TOMORROW" must fit a 1/5-width tile even on a 320px phone.
-                    fontSize: relative ? 'clamp(8px, 2.6vw, 10px)' : undefined,
-                    letterSpacing: relative ? 'clamp(0px, 0.15vw, 0.6px)' : undefined,
+                    // Small labels above the date. "TOMORROW" fits a 1/5-width tile with room to spare,
+                    // even on a 320px phone.
+                    fontSize: relative ? 'clamp(7.5px, 2.25vw, 9px)' : '0.6875rem',
+                    letterSpacing: relative ? 'clamp(0px, 0.1vw, 0.4px)' : undefined,
                   }}
                 >
                   {relative ?? fmtWeekdayShort(day.date)}
