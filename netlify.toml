@@ -18,3 +18,10 @@
   for = "/site.webmanifest"
   [headers.values]
     Content-Type = "application/manifest+json"
+
+# Clean link to text people. It serves the app itself, and because it's a URL iMessage
+# hasn't seen before, phones fetch a fresh preview (banner, title, description).
+[[redirects]]
+  from = "/share"
+  to = "/index.html"
+  status = 200
