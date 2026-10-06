@@ -12,3 +12,9 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# Web app manifest (home-screen install) needs its proper content type.
+[[headers]]
+  for = "/site.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
