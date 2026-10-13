@@ -13,7 +13,7 @@ export interface ChipSelectProps {
   single?: boolean;
 }
 
-/** Multi-select chips, e.g. which sides to keep or fruit & veggie bar extras. */
+/** Chips: multi-select (which sides to keep) or pick-one (breakfast items). */
 export function ChipSelect({ title, hint, options, selected, onToggle, single }: ChipSelectProps) {
   return (
     <Box component="section" aria-label={title}>

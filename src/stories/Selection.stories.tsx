@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { ChipSelect } from '../components/ChipSelect';
 import { ChoiceCarousel, type CarouselOption } from '../components/ChoiceCarousel';
 import { SectionHeader } from '../components/SectionHeader';
-import { BREAKFAST_GRAINS, FRUIT_BAR, VEGGIE_BAR } from '../data/menu';
-import { toggleBarPick } from '../lib/plan';
+import { BREAKFAST_GRAINS } from '../data/menu';
 import { dayOn } from './fixtures';
 
 const meta = {
@@ -32,7 +31,7 @@ export const SectionHeaders: Story = {
     <>
       <SectionHeader title="Choose lunch" hint="Select 1" required />
       <SectionHeader title="Choose lunch" hint="Select 1" required done />
-      <SectionHeader title="Veggie from the bar" hint="Pick 1 · may vary by day" />
+      <SectionHeader title="Breakfast" hint="Select 1" />
     </>
   ),
 };
@@ -74,20 +73,6 @@ export const SidesChips: Story = {
         selected={selected}
         onToggle={(s) => setSelected((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]))}
       />
-    );
-  },
-};
-
-export const FruitVeggieBar: Story = {
-  name: 'Chips — one veggie + one fruit',
-  render: function Render() {
-    const [selected, setSelected] = useState<string[]>(['Carrots', 'Raisins']);
-    const toggle = (s: string) => setSelected((cur) => toggleBarPick(cur, s));
-    return (
-      <>
-        <ChipSelect title="Veggie from the bar" hint="Pick 1 · may vary by day" options={VEGGIE_BAR} selected={selected} onToggle={toggle} single />
-        <ChipSelect title="Fruit from the bar" hint="Pick 1 · may vary by day" options={FRUIT_BAR} selected={selected} onToggle={toggle} single />
-      </>
     );
   },
 };

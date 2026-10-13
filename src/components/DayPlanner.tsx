@@ -5,9 +5,7 @@ import {
   BREAKFAST_GRAINS,
   BREAKFAST_NOTE,
   DIET_TAG_LABELS,
-  FRUIT_BAR,
   MILK_CHOICES,
-  VEGGIE_BAR,
   OFFERED_DAILY,
   type MenuDay,
 } from '../data/menu';
@@ -18,7 +16,6 @@ import { useAutofill } from '../prototype/autofill';
 import {
   EDP_PICKUP_TIMES,
   sidesFor,
-  toggleBarPick,
   type BreakfastPicks,
   type DayPlan,
   type DrinkChoice,
@@ -126,7 +123,6 @@ export function DayPlanner({ day, plan, onChange, onApplyToWeek, diet = defaultD
   }
 
   const sides = sidesFor(day, plan);
-  const eatingAtSchool = plan.lunch !== 'home';
   const toggle = (list: string[], item: string) =>
     list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
@@ -187,27 +183,6 @@ export function DayPlanner({ day, plan, onChange, onApplyToWeek, diet = defaultD
           />
         )}
       </Stack>
-
-      {eatingAtSchool && (
-        <Stack spacing={2}>
-          <ChipSelect
-            title="Veggie from the bar"
-            hint="Pick 1 · may vary by day"
-            options={VEGGIE_BAR}
-            selected={plan.extras}
-            onToggle={(item) => onChange({ extras: toggleBarPick(plan.extras, item) })}
-            single
-          />
-          <ChipSelect
-            title="Fruit from the bar"
-            hint="Pick 1 · may vary by day"
-            options={FRUIT_BAR}
-            selected={plan.extras}
-            onToggle={(item) => onChange({ extras: toggleBarPick(plan.extras, item) })}
-            single
-          />
-        </Stack>
-      )}
 
       <ChoiceCarousel
         title="Choose a drink"

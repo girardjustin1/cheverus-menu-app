@@ -52,7 +52,6 @@ export function buildEmail(week: Week, plan: PlanState, scope: EmailScope = {}):
         const skipped = day.sides.filter((s) => !sides.includes(s));
         if (sides.length) lines.push(`• Sides: ${sides.join(', ')}`);
         if (skipped.length) lines.push(`• Please skip: ${skipped.join(', ')}`);
-        if (dayPlan.extras.length) lines.push(`• From the fruit & veggie bar: ${dayPlan.extras.join(', ')}`);
       }
     }
     if (dayPlan.drink) lines.push(`• Drink: ${dayPlan.drink === 'none' ? 'No milk — sending a drink from home' : dayPlan.drink}`);
