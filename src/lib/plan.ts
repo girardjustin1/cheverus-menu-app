@@ -1,4 +1,4 @@
-import { FRUIT_BAR, MENU_DAYS, OFFERED_DAILY, VEGGIE_BAR, type MenuDay } from '../data/menu';
+import { MENU_DAYS, OFFERED_DAILY, type MenuDay } from '../data/menu';
 import { fmtMonthDay, mondayOf, parseISODate } from './dates';
 import { defaultDietPrefs, type DietPrefs } from './diet';
 
@@ -23,7 +23,7 @@ export interface DayPlan {
   lunch?: LunchChoice;
   /** Sides to include. Undefined means "all of the day's sides". */
   sides?: string[];
-  /** Extras from the fruit & veggie bar. */
+  /** No longer offered (the fruit & veggie bar isn't a choice). Kept so older saved plans load; never shown or emailed. */
   extras: string[];
   drink?: DrinkChoice;
   breakfast?: boolean;
@@ -106,16 +106,6 @@ export function lunchLabel(day: MenuDay, choice: LunchChoice): string {
   if (choice === 'hot') return day.entree;
   if (choice === 'home') return 'Packed lunch from home';
   return OFFERED_DAILY.find((o) => o.id === choice)?.name ?? choice;
-}
-
-/**
- * Pick from the fruit & veggie bar: one veggie and one fruit at most. Choosing another item
- * in the same group swaps it; choosing the current pick clears it.
- */
-export function toggleBarPick(extras: string[], item: string): string[] {
-  if (extras.includes(item)) return extras.filter((x) => x !== item);
-  const group = VEGGIE_BAR.includes(item) ? VEGGIE_BAR : FRUIT_BAR;
-  return [...extras.filter((x) => !group.includes(x)), item];
 }
 
 export const sidesFor = (day: MenuDay, plan: DayPlan) => plan.sides ?? day.sides;

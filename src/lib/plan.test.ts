@@ -3,7 +3,7 @@ import { MENU_DAYS } from '../data/menu';
 import { FULL_WEEK, PARTLY_PLANNED, WEEK_OF_OCT_12, WEEK_OF_OCT_5 } from '../stories/fixtures';
 import { mondayOf } from './dates';
 import { buildEmail, mailtoHref } from './email';
-import { dayStatus, defaultWeek, groupWeeks, isWeekday, toggleBarPick } from './plan';
+import { dayStatus, defaultWeek, groupWeeks, isWeekday } from './plan';
 
 describe('menu data', () => {
   it('only lists weekdays, each once', () => {
@@ -66,7 +66,9 @@ describe('buildEmail', () => {
     expect(body).toContain('• Lunch: Asian Chicken ("General Tso" hot lunch)');
     expect(body).toContain('• Sides: Whole Grain Rice, Roasted Broccoli, Sweet Orange');
     expect(body).toContain('• Please skip: Red Pepper Strips');
-    expect(body).toContain('• From the fruit & veggie bar: Raisins');
+    // The fruit & veggie bar isn't a choice; an old saved pick (Raisins) never reaches the email.
+    expect(body).not.toContain('veggie bar');
+    expect(body).not.toContain('Raisins');
     expect(body).toContain('• Extended Day: Yes — pickup by 5:00 PM');
     expect(body).toContain('• Lunch: Jammie Sunbutter & Jelly Sandwich');
     expect(body).toContain('• Note: Grandma picking up');
@@ -94,20 +96,6 @@ describe('buildEmail', () => {
     const href = mailtoHref(buildEmail(WEEK_OF_OCT_5, FULL_WEEK));
     expect(href.startsWith('mailto:name%40example.com?subject=Sam%20')).toBe(true);
     expect(href).not.toContain('+');
-  });
-});
-
-describe('toggleBarPick — one veggie and one fruit', () => {
-  it('keeps one of each, swaps within a group, and clears on re-tap', () => {
-    let extras: string[] = [];
-    extras = toggleBarPick(extras, 'Carrots');
-    extras = toggleBarPick(extras, 'Raisins');
-    expect(extras).toEqual(['Carrots', 'Raisins']);
-    extras = toggleBarPick(extras, 'Cucumbers');
-    expect(extras).toEqual(['Raisins', 'Cucumbers']);
-    extras = toggleBarPick(extras, 'Fruit Cups');
-    expect(extras).toEqual(['Cucumbers', 'Fruit Cups']);
-    expect(toggleBarPick(extras, 'Fruit Cups')).toEqual(['Cucumbers']);
   });
 });
 

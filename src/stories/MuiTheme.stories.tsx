@@ -168,8 +168,8 @@ export const Surfaces: Story = {
       </Section>
       <Section title="Accordion">
         <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>Fruit & veggie bar</AccordionSummary>
-          <AccordionDetails>Carrots, cucumbers, tomatoes, celery sticks…</AccordionDetails>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>Grab & Go breakfast</AccordionSummary>
+          <AccordionDetails>Muffins, cereal, cereal bars, breakfast breads…</AccordionDetails>
         </Accordion>
       </Section>
       <Section title="List">

@@ -37,11 +37,6 @@ export const OFFERED_DAILY: DailyOption[] = [
   { id: 'cheese-sandwich', name: 'American Cheese Sandwich on Wheat Bread', tags: ['V'] },
 ];
 
-/** "Fruit & Veggie Bars May Include" — availability varies by day. One of each per lunch. */
-export const VEGGIE_BAR = ['Carrots', 'Cucumbers', 'Tomatoes', 'Celery Sticks', 'Three Bean Salad'];
-export const FRUIT_BAR = ['Fresh Fruit', 'Fruit Cups', 'Raisins', '100% Fruit Juice'];
-export const FRUIT_VEGGIE_BAR = [...VEGGIE_BAR, ...FRUIT_BAR];
-
 /** Every meal comes with a choice of milk; the breakfast note lists fat-free or 1%. */
 export const MILK_CHOICES = ['1% Milk', 'Fat-Free Milk'];
 
