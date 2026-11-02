@@ -23,6 +23,8 @@ export interface MenuDay {
   /** Grain, vegetable and fruit sides served with the hot lunch. */
   sides: string[];
   noSchool?: boolean;
+  /** Why there's no school, as printed, e.g. "Veterans Day". */
+  noSchoolReason?: string;
 }
 
 export interface DailyOption {

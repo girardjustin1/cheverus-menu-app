@@ -40,7 +40,12 @@ export const JustTheDay: Story = {
   args: { current: { mode: 'day', monthId: '2026-10', weekMonday: '2026-10-05', date: '2026-10-07' } },
 };
 
-export const NovemberNoMenu: Story = {
-  name: 'November (menu not posted)',
-  args: { current: { mode: 'week', monthId: '2026-11', weekMonday: '', date: '' } },
+export const NovemberMenu: Story = {
+  name: 'November — first week',
+  args: { today: '2026-11-02', current: { mode: 'week', monthId: '2026-11', weekMonday: '2026-11-02', date: '2026-11-02' } },
+};
+
+export const DecemberNoMenu: Story = {
+  name: 'December (menu not posted)',
+  args: { current: { mode: 'week', monthId: '2026-12', weekMonday: '', date: '' } },
 };

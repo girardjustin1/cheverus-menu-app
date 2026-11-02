@@ -31,9 +31,19 @@ export const NoSchoolMonday: Story = {
   args: { initialPlan: EMPTY, today: '2026-10-12' },
 };
 
-export const NovemberComingSoon: Story = {
-  name: 'November — menu not posted',
-  args: { initialPlan: EMPTY, initialMonthId: '2026-11' },
+export const NovemberFirstWeek: Story = {
+  name: 'November — first week (today Nov 2)',
+  args: { initialPlan: EMPTY, initialMonthId: '2026-11', today: '2026-11-02' },
+};
+
+export const NovemberVeteransDay: Story = {
+  name: 'November — Veterans Day (no school)',
+  args: { initialPlan: EMPTY, initialMonthId: '2026-11', today: '2026-11-11' },
+};
+
+export const DecemberComingSoon: Story = {
+  name: 'December — menu not posted',
+  args: { initialPlan: EMPTY, initialMonthId: '2026-12' },
 };
 
 export const VegetarianWeek: Story = {

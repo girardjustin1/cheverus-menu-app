@@ -82,16 +82,20 @@ describe('order history', () => {
 });
 
 describe('months', () => {
-  it('has October published and November waiting for its menu', () => {
+  it('has October and November published, December waiting for its menu', () => {
     expect(MENU_MONTHS.map((m) => [m.short, isPublished(m)])).toEqual([
       ['Oct', true],
-      ['Nov', false],
+      ['Nov', true],
+      ['Dec', false],
     ]);
   });
 
   it('opens on the month containing today', () => {
     expect(defaultMonth(MENU_MONTHS, '2026-10-06').id).toBe('2026-10');
-    expect(defaultMonth(MENU_MONTHS, '2026-11-09').id).toBe('2026-11');
+    expect(defaultMonth(MENU_MONTHS, '2026-11-02').id).toBe('2026-11');
+    // The November menu runs through Fri Dec 4.
+    expect(defaultMonth(MENU_MONTHS, '2026-12-03').id).toBe('2026-11');
+    expect(defaultMonth(MENU_MONTHS, '2026-12-10').id).toBe('2026-12');
     expect(monthOf('2026-09-30')?.short).toBe('Oct');
   });
 });

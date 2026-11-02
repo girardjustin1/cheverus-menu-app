@@ -59,8 +59,13 @@ export const FamilyInfo: Story = {
 };
 
 export const November: Story = {
-  name: 'November picked — menu not posted',
-  args: { fixture: { account: ACCOUNT, plan: ONBOARDED_EMPTY, mode: 'week', monthId: '2026-11' } },
+  name: 'November menu',
+  args: { fixture: { account: ACCOUNT, plan: ONBOARDED_EMPTY, mode: 'week', monthId: '2026-11' }, today: '2026-11-02' },
+};
+
+export const December: Story = {
+  name: 'December picked — menu not posted',
+  args: { fixture: { account: ACCOUNT, plan: ONBOARDED_EMPTY, mode: 'week', monthId: '2026-12' } },
 };
 
 export const PastOrdersDaily: Story = {
@@ -160,7 +165,7 @@ export const SaveDraftFlow: Story = {
   },
 };
 
-/** The header Plan button opens the modal; November is greyed out until its menu is posted. */
+/** The header Plan button opens the modal; December is greyed out until its menu is posted. */
 export const PlanButtonMonths: Story = {
   args: { fixture: { account: ACCOUNT, plan: ONBOARDED_EMPTY, mode: 'week' } },
   play: async ({ canvasElement }) => {
@@ -168,7 +173,8 @@ export const PlanButtonMonths: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Plan' }));
     const dialog = within(await within(canvasElement.ownerDocument.body).findByRole('dialog'));
     await expect(dialog.getByRole('radio', { name: 'October 2026' })).toHaveAttribute('aria-checked', 'true');
-    await expect(dialog.getByRole('radio', { name: 'November 2026' })).toHaveAttribute('aria-disabled', 'true');
+    await expect(dialog.getByRole('radio', { name: 'November 2026' })).not.toHaveAttribute('aria-disabled', 'true');
+    await expect(dialog.getByRole('radio', { name: 'December 2026' })).toHaveAttribute('aria-disabled', 'true');
   },
 };
 

@@ -30,7 +30,7 @@ export function buildEmail(week: Week, plan: PlanState, scope: EmailScope = {}):
     const dayPlan = plan.days[day.date];
     const status = dayStatus(day, dayPlan);
     if (status === 'no-school') {
-      sections.push(`${fmtLongDate(day.date)}\n• No school`);
+      sections.push(`${fmtLongDate(day.date)}\n• No school${day.noSchoolReason ? ` (${day.noSchoolReason})` : ''}`);
       continue;
     }
     if (status === 'empty' || !dayPlan) continue;
