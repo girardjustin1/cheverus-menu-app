@@ -11,5 +11,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Where November goes until its menu PDF is transcribed into src/data/months.ts. */
-export const November: Story = { args: { month: MENU_MONTHS.find((m) => m.id === '2026-11')! } };
+/** Where December goes until its menu is transcribed into src/data/months.ts. */
+export const December: Story = { args: { month: MENU_MONTHS.find((m) => m.id === '2026-12')! } };

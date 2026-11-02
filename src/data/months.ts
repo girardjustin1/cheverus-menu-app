@@ -1,4 +1,5 @@
 import { MENU_DAYS, type MenuDay } from './menu';
+import { NOVEMBER_2026_DAYS } from './menu-november-2026';
 
 export interface MenuMonth {
   id: string;
@@ -29,8 +30,18 @@ export const MENU_MONTHS: MenuMonth[] = [
     id: '2026-11',
     label: 'November 2026',
     short: 'Nov',
+    // The November menu runs into the first week of December.
     start: '2026-11-02',
-    end: '2026-11-30',
+    end: '2026-12-04',
+    days: NOVEMBER_2026_DAYS,
+    source: 'menu/November Lunch 2026.png',
+  },
+  {
+    id: '2026-12',
+    label: 'December 2026',
+    short: 'Dec',
+    start: '2026-12-07',
+    end: '2026-12-31',
     days: [],
   },
 ];

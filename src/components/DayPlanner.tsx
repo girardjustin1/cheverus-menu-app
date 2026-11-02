@@ -111,11 +111,16 @@ export function DayPlanner({ day, plan, onChange, onApplyToWeek, diet = defaultD
       <Card sx={{ m: 2 }}>
         <CardContent sx={{ textAlign: 'center', py: 5 }}>
           <Typography sx={{ fontSize: 44 }} aria-hidden>
-            🏖️
+            {/thanksgiving/i.test(day.noSchoolReason ?? '') ? '🦃' : /veteran/i.test(day.noSchoolReason ?? '') ? '🇺🇸' : '🏖️'}
           </Typography>
           <Typography variant="h2" component="h2">
             No school
           </Typography>
+          {day.noSchoolReason && (
+            <Typography variant="subtitle1" sx={{ mt: 0.5 }}>
+              {day.noSchoolReason}
+            </Typography>
+          )}
           <Typography color="text.secondary">{fmtLongDate(day.date)}</Typography>
         </CardContent>
       </Card>
